@@ -1,7 +1,3 @@
-* new_fact.c – Computes the factorial of an integer entered
-* by the user. Program terminates when the integer entered is not
-* positive.
-*/
 #include <stdio.h>
 unsigned long long fact(int n);
 int main(void) {
