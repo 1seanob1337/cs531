@@ -453,7 +453,6 @@ struct struct_address_t *add_to_list(struct struct_address_t *new_node,
     {
         *head = new_node;
         *curr = *head;
-        printf("\n Node creation success! \n");
         return *head;
     }
     if (add_to_end)
@@ -615,6 +614,8 @@ int delete_from_list(void *input,
     }
     // TODO implement node free function
     print_iden(del,"deleted");
+    free(del->alias);
+    free(del->octet);
     free(del);
     del = NULL;
     return 0;
