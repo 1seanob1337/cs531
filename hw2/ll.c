@@ -59,7 +59,15 @@ int save_file(struct struct_address_t* ,struct struct_address_t* );
 int save_file(struct struct_address_t* head,struct struct_address_t* curr )
 {
     FILE* fp;
-    fp=fopen(FILENAME,"w");
+    printf("Enter filename:");
+    char fname[FILENAME_MAX];
+    char* tmp;
+    fgets(fname,FILENAME_MAX,stdin);
+    (tmp=strrchr(fname, '\n')) ? *tmp='\0': my_flush(stdin);
+
+
+
+    fp=fopen(fname,"w");
     if(fp==NULL)
     {
         perror("Unable to write to file");
@@ -70,6 +78,7 @@ int save_file(struct struct_address_t* head,struct struct_address_t* curr )
         print_list(head,curr,fp);
         return 0;
     }
+    fclose(fp);
 
 }
 char * node_string(struct struct_address_t* node)
@@ -130,6 +139,7 @@ int delete_user_address(struct struct_address_t** head, struct struct_address_t*
     {
         fprintf(stderr,"Invalid alias to delete\n");
         print_list(*head,*curr,stdout);
+        return 0;
     } 
     node=search_in_list(tmp_buf,USE_ALIAS,NULL,head,curr);
     print_iden(node,"delete: ");
@@ -312,12 +322,14 @@ int update_address(struct struct_address_t **head,
     struct struct_address_t *node;
     char buf[20];
     int octet=-1;
+    static int tmp_addr[4];
     int valid;
     char *tmp;
+
     fprintf(stdout, "Enter alias: ");
     fgets(buf, 20, stdin);
 
-    (tmp=strrchr(buf, '\n')) ? *tmp='\0': (void)0;
+    (tmp=strrchr(buf, '\n')) ? *tmp='\0': my_flush(stdin);
     if(tmp==NULL) my_flush(stdin);
 
     if(!validate_alias(buf,false,head,curr))
@@ -334,24 +346,27 @@ int update_address(struct struct_address_t **head,
         do{
             fprintf(stdout, "Enter location value #%i (0-255):",i);
             fgets(buf, 20, stdin);
-            (tmp=strrchr(buf, '\n')) ? *tmp='\0': (void)0;
-            if(tmp==NULL) my_flush(stdin);
-            my_flush(stdin);
-            if((valid=sscanf(buf,"%i",&octet))==1)
+            (tmp=strrchr(buf, '\n')) ? *tmp='\0': my_flush(stdin);
+            if((valid=sscanf(buf,"%i",&octet))!=1)
             {
-                perror("problem scanning input. Please enter input (0-255)");
+                fprintf(stderr,"%s","problem scanning input. Please enter input (0-255)");
             }
-            if(valid=(valid && (octet>0 && octet < 255)))
+            else if( !(valid=(valid && ((octet>=MIN_OCTET) & (octet <=MAX_OCTET)))))
             {
                 fprintf(stderr,"error %i is an illegal entry - please reenter:\n",octet);
             }
-            if(valid)
+            else
             {
-                *(node->octet +i-1)=octet;
+                tmp_addr[i-1]=octet;
             }
         }
         while(!valid);
     }
+    if(validate_addr(tmp_addr,4,head,curr))
+    {
+        memcpy(node->octet,tmp_addr,4*sizeof(int));
+    }
+    return 0;
 }
 
 
@@ -379,16 +394,18 @@ struct struct_address_t *prompt_address_add(struct struct_address_t **head,
     if(tmp==NULL) my_flush(stdin);
     if(!validate_alias(alias,true,head,curr)) return NULL;
 
-    //memset is to clear prior input from buffer
-    memset(raw_addr,'\0',20*sizeof(char));
-    fprintf(stdout, "Enter address: ");
-    fgets(raw_addr, 20, stdin);
-    (tmp=strrchr(raw_addr, '\n')) ? *tmp='\0': (void)0;
-    if(tmp==NULL) my_flush(stdin);
-    // taken from lecture notes
-    matched=sscanf(raw_addr, "%d.%d.%d.%d",
-                     octet, octet + 1, octet + 2, octet + 3);
-    if(!validate_addr(octet,matched,head,curr)) return NULL;
+    do
+    {
+        //memset is to clear prior input from buffer
+        memset(raw_addr,'\0',20*sizeof(char));
+        fprintf(stdout, "Enter address: ");
+        fgets(raw_addr, 20, stdin);
+        (tmp=strrchr(raw_addr, '\n')) ? *tmp='\0': (void)0;
+        if(tmp==NULL) my_flush(stdin);
+        // taken from lecture notes
+        matched=sscanf(raw_addr, "%d.%d.%d.%d",
+                         octet, octet + 1, octet + 2, octet + 3);
+    }while(!validate_addr(octet,matched,head,curr));
     node= create_node(alias, octet);
     if(node==NULL)
     {
