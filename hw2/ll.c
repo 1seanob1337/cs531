@@ -372,25 +372,30 @@ struct struct_address_t *prompt_address_add(struct struct_address_t **head,
     int *octet = malloc(4 * sizeof(int));
     char * tmp;
     int matched;
-    do{
+    struct struct_address_t *node;
     fprintf(stdout, "Enter alias: ");
     fgets(alias, 20, stdin);
     (tmp=strrchr(alias, '\n')) ? *tmp='\0': (void)0;
     if(tmp==NULL) my_flush(stdin);
-    }while(!validate_alias(alias,true,head,curr));
+    if(!validate_alias(alias,true,head,curr)) return NULL;
 
-    do
+    //memset is to clear prior input from buffer
+    memset(raw_addr,'\0',20*sizeof(char));
+    fprintf(stdout, "Enter address: ");
+    fgets(raw_addr, 20, stdin);
+    (tmp=strrchr(raw_addr, '\n')) ? *tmp='\0': (void)0;
+    if(tmp==NULL) my_flush(stdin);
+    // taken from lecture notes
+    matched=sscanf(raw_addr, "%d.%d.%d.%d",
+                     octet, octet + 1, octet + 2, octet + 3);
+    if(!validate_addr(octet,matched,head,curr)) return NULL;
+    node= create_node(alias, octet);
+    if(node==NULL)
     {
-        //memset is to clear prior input from buffer
-        memset(raw_addr,'\0',20*sizeof(char));
-        fprintf(stdout, "Enter address: ");
-        fgets(raw_addr, 20, stdin);
-        (tmp=strrchr(raw_addr, '\n')) ? *tmp='\0': (void)0;
-        if(tmp==NULL) my_flush(stdin);
-        // taken from lecture notes
-        matched=sscanf(raw_addr, "%d.%d.%d.%d", octet, octet + 1, octet + 2, octet + 3);
-    } while (!validate_addr(octet,matched,head,curr));
-    return create_node(alias, octet);
+        perror("error: malloc() failed to create node.\n\
+Not exiting but you should save your work\n");
+    }
+    return node;
 }
 
 
@@ -734,26 +739,17 @@ int main(void)
     while (1)
     {
         selection = print_menu();
-        if (selection == '1') 
-        {
-            ptr = prompt_address_add(&head,&curr);
-            if (ptr == NULL)
-            {
-                return -1;
-            }
-            add_to_list(ptr, ADD_FRONT, &head, &curr);
-        }
+        if (selection == '1') (ptr=prompt_address_add(&head,&curr)) == NULL ?
+                                        (void)0:
+                                        add_to_list(ptr,ADD_FRONT,&head,&curr);
         else if (selection == '2')  look_up_address(&head, &curr);
         else if (selection == '3')  update_address(&head,&curr);
         else if (selection == '4')  delete_user_address(&head,&curr);
         else if (selection == '5')  print_list(head,curr,stdout);
         else if (selection == '6')  display_alias_for_location(&head,&curr);
-        /*deliberately not checking return of save to file in main.
-        In the even it cannot write to the file I don't want the program 
-        to exit.
-        */
         else if (selection == '7')  save_file(head,curr);
         else if (selection == '8')  return 0;
+        else (void)0;
     }
 
 
