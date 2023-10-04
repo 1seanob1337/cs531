@@ -1,4 +1,3 @@
-//HW2.c Sean O'Brien  G01459683.c
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
