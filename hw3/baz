@@ -1,0 +1,8 @@
+ alias=baker	octet=83.123.47.63
+ alias=green	octet=111.22.5.66
+ alias=jet	octet=131.250.95.21
+ alias=opal	octet=83.123.150.205
+ alias=platte	octet=111.22.3.44
+ alias=seam	octet=1.2.3.4
+ alias=wabash	octet=172.66.7.88
+ alias=wabash2	octet=172.66.7.89
