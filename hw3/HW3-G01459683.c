@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#define FILENAME "abc.txt"
+#define FILENAME "CS531_Inet.txt"
 // "CS531_Inet.txt"
 #define DEBUG 0
 #define EXPECT_MISSING true
