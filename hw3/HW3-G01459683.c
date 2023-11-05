@@ -513,8 +513,6 @@ struct address_t *insert(struct address_t *node, struct address_t *head) {
     node->depth += 1;
     node->parent = head;
     if (strcmp(node->alias, head->alias) < 0) {
-        if (DEBUG)
-            ("recur left\n");
         // this will be child of head therefore depth of this node needs
         // incrementing
         head->leftChild = insert(node, head->leftChild);
@@ -583,7 +581,6 @@ struct address_t *deleteNode(struct address_t *root, char *alias) {
     // to be deleted
     else {
         struct address_t *grandParent = root->parent;
-        int t_depth = root->depth - 1;
         // node with only one child or no child
         // the only child will have height of zero but will be a depth of
         // parent-1 it will also inherent parent's parent if (root-)
@@ -644,15 +641,13 @@ struct address_t *search_in_list(void *key, struct address_t *head,
 // assumes new line stripped
 bool validate_alias(char *alias, bool expect_missing,
                     struct address_t *head) {
-    char c;
     if (strlen(alias) < 1 || strlen(alias) > 10)
         return false;
     // converting alias to lowercase
     for (int i = 0; *(alias + i) != '\0'; i++) {
         *(alias + i) = tolower(*(alias + i));
     }
-    if (!(search_in_list(alias, head, &compare_alias) != NULL ^
-          expect_missing)) {
+    if (((search_in_list(alias, head, &compare_alias) == NULL) ^ expect_missing)) {
         if (expect_missing)
             fprintf(stderr, "Invalid %s is in the list\n", alias);
         else
@@ -793,10 +788,8 @@ int validate_addr(int *octet, int matched, struct address_t *head) {
  */
 char print_menu() {
     bool valid = true;
-    char input;
     char temp_buf[10];
     char *tmp;
-    char c;
     do {
         fprintf(stdout, "1) Add address\n\
 2) Look up address\n\
@@ -846,6 +839,7 @@ void print_file_format(struct address_t *node, char message[], FILE *fp) {
 struct address_t *update_address(struct address_t *head) {
     struct address_t *node;
     char buf[20];
+    char temp_alias[20];
     int octet = -1;
     static int tmp_addr[4];
     int valid;
@@ -862,6 +856,7 @@ struct address_t *update_address(struct address_t *head) {
         fprintf(stderr, "Invalid entry for alias\n");
         return head;
     }
+    strcpy(temp_alias,buf);
     // garunteed to succeed since we already searched the list
     // inefficent but I am not refactoring at this point
 
@@ -901,8 +896,8 @@ struct address_t *update_address(struct address_t *head) {
          * sure I can get away from those checks. but steps 3 and 4 can
          * probably be combined
          */
-        head = deleteNode(head, buf);
-        node = create_node(buf, tmp_addr);
+        head = deleteNode(head, temp_alias);
+        node = create_node(temp_alias, tmp_addr);
         head = insert(node, head);
     }
     return head;
@@ -967,7 +962,7 @@ int display_alias_for_location(struct address_t *head) {
     }
     // we have to check node if it is a match
     //  and then recursively check if left and right are matches.
-    printf("Location: %d:%d", half_addr[0], half_addr[1]);
+    printf("Location: %d.%d\n", half_addr[0], half_addr[1]);
     union Accumulator acc;
     acc.p =
         foldWhile(half_addr, node, compare_half, print_alias, (void *)0);
